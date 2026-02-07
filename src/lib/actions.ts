@@ -92,11 +92,11 @@ export async function fetchHabits() {
     });
 
     // Transform to store format
-    return habits.map(h => ({
+    return habits.map((h: any) => ({
         id: h.id,
         name: h.name,
-        completedDates: h.logs.reduce((acc, log) => ({ ...acc, [log.date]: true }), {} as Record<string, boolean>),
-        notes: h.logs.reduce((acc, log) => log.note ? ({ ...acc, [log.date]: log.note }) : acc, {} as Record<string, string>)
+        completedDates: h.logs.reduce((acc: any, log: any) => ({ ...acc, [log.date]: true }), {} as Record<string, boolean>),
+        notes: h.logs.reduce((acc: any, log: any) => log.note ? ({ ...acc, [log.date]: log.note }) : acc, {} as Record<string, string>)
     }));
 }
 
