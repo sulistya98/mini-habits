@@ -8,6 +8,10 @@ import { z } from 'zod';
 import { auth } from '../../auth';
 import { revalidatePath } from 'next/cache';
 
+function isRedirectError(error: any) {
+  return error && typeof error === 'object' && 'digest' in error && typeof error.digest === 'string' && error.digest.startsWith('NEXT_REDIRECT');
+}
+
 // --- Auth Actions ---
 
 export async function authenticate(
@@ -17,6 +21,7 @@ export async function authenticate(
   try {
     await signIn('credentials', formData);
   } catch (error) {
+    if (isRedirectError(error)) throw error;
     if (error instanceof AuthError) {
       switch (error.type) {
         case 'CredentialsSignin':
@@ -46,8 +51,13 @@ export async function registerUser(prevState: string | undefined, formData: Form
   const { email, password, name } = parsed.data;
 
   try {
+    console.log(`Attempting to register user: ${email}`); // Debug Log
+
     const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) return 'User already exists.';
+    if (existingUser) {
+        console.log('User already exists');
+        return 'User already exists.';
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     await prisma.user.create({
@@ -57,16 +67,23 @@ export async function registerUser(prevState: string | undefined, formData: Form
         name: name || email.split('@')[0],
       },
     });
+    console.log('User created successfully in DB');
+    
+    // Auto login
+    await signIn('credentials', { email, password });
+    
   } catch (error) {
-    return 'Failed to create user.';
-  }
-  
-  // Auto login after register
-  try {
-      await signIn('credentials', { email, password });
-  } catch (error) {
-      if (error instanceof AuthError) throw error;
-      // redirect happens here
+    if (isRedirectError(error)) {
+        throw error;
+    }
+    
+    console.error("Registration Error:", error); // Critical for debugging
+    
+    if (error instanceof AuthError) {
+        return "Authentication failed during auto-login.";
+    }
+    
+    return 'Failed to create user. Check server logs.';
   }
 }
 
