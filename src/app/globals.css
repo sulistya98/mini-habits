@@ -12,7 +12,7 @@ html, body {
 }
 
 body {
-  background: white;
+  /* background managed by utility classes in layout */
 }
 
 @utility safe-area-pb {

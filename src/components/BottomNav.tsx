@@ -15,7 +15,7 @@ export function BottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 safe-area-pb z-50">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-neutral-950 border-t border-neutral-200 dark:border-neutral-800 safe-area-pb z-50">
       <div className="max-w-md mx-auto flex justify-around items-center h-16">
         {links.map((link) => {
           const Icon = link.icon;
@@ -26,7 +26,7 @@ export function BottomNav() {
               href={link.href}
               className={cn(
                 "flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors duration-200",
-                isActive ? "text-neutral-900" : "text-neutral-400 hover:text-neutral-600"
+                isActive ? "text-neutral-900 dark:text-neutral-50" : "text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300"
               )}
             >
               <Icon className={cn("w-6 h-6", isActive && "stroke-2")} />

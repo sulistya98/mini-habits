@@ -126,16 +126,16 @@ export default function HistoryPage() {
                         className={cn(
                             "w-7 h-7 rounded-md transition-all duration-200 border flex items-center justify-center text-[10px] font-medium relative",
                             isDone 
-                                ? "bg-neutral-900 border-neutral-900 text-white" 
-                                : "bg-white border-neutral-200 text-neutral-400 hover:border-neutral-300",
-                            isToday && !isDone && "ring-2 ring-neutral-900/10 ring-offset-1 border-neutral-300"
+                                ? "bg-neutral-900 dark:bg-neutral-100 border-neutral-900 dark:border-neutral-100 text-white dark:text-neutral-900" 
+                                : "bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 text-neutral-400 dark:text-neutral-500 hover:border-neutral-300 dark:hover:border-neutral-700",
+                            isToday && !isDone && "ring-2 ring-neutral-900/10 dark:ring-neutral-100/10 ring-offset-1 dark:ring-offset-neutral-900 border-neutral-300 dark:border-neutral-600"
                         )}
                     >
                         {dayNum}
                         {note && (
                             <div className={cn(
                                 "absolute bottom-1 w-0.5 h-0.5 rounded-full",
-                                isDone ? "bg-white/50" : "bg-neutral-400"
+                                isDone ? "bg-white/50 dark:bg-neutral-900/50" : "bg-neutral-400 dark:bg-neutral-500"
                             )} />
                         )}
                     </div>
@@ -146,15 +146,15 @@ export default function HistoryPage() {
   );
 
   return (
-    <main className="min-h-screen bg-neutral-50 text-neutral-900 font-sans">
-      <div className="max-w-md mx-auto min-h-screen flex flex-col bg-white shadow-2xl shadow-neutral-200/50 relative">
+    <main className="min-h-screen bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-50 font-sans">
+      <div className="max-w-md mx-auto min-h-screen flex flex-col bg-white dark:bg-neutral-950 shadow-2xl shadow-neutral-200/50 dark:shadow-none border-x border-neutral-100 dark:border-neutral-900 relative">
         
-        <header className="p-6 pt-12 pb-4 border-b border-neutral-100 flex items-center justify-between">
-          <h1 className="text-2xl font-light tracking-tight text-neutral-950">History</h1>
+        <header className="p-6 pt-12 pb-4 border-b border-neutral-100 dark:border-neutral-900 flex items-center justify-between">
+          <h1 className="text-2xl font-light tracking-tight text-neutral-950 dark:text-neutral-50">History</h1>
           <div className="flex gap-2">
             <button 
                 onClick={openSettings}
-                className="p-2 rounded-full hover:bg-neutral-100 transition-colors text-neutral-400"
+                className="p-2 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300"
                 title="API Key Settings"
             >
                 <Key className="w-4 h-4" />
@@ -162,7 +162,7 @@ export default function HistoryPage() {
             <button 
                 onClick={handleAnalyze}
                 disabled={isAnalyzing}
-                className="p-2 rounded-full hover:bg-neutral-100 transition-colors text-neutral-500 disabled:opacity-50"
+                className="p-2 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-neutral-500 dark:text-neutral-400 disabled:opacity-50"
                 title="AI Weekly Review"
             >
                 {isAnalyzing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
@@ -174,24 +174,24 @@ export default function HistoryPage() {
           <ClientOnly>
              {/* AI Insight Card */}
              {analysis && (
-                 <div className="bg-neutral-50 border border-neutral-200 p-4 rounded-xl relative animate-in fade-in slide-in-from-top-4">
+                 <div className="bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-4 rounded-xl relative animate-in fade-in slide-in-from-top-4">
                      <button 
                         onClick={() => setAnalysis(null)}
-                        className="absolute top-2 right-2 text-neutral-400 hover:text-neutral-600"
+                        className="absolute top-2 right-2 text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300"
                      >
                          <X size={14} />
                      </button>
-                     <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2 flex items-center gap-2">
+                     <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-2 flex items-center gap-2">
                          <Sparkles size={12} /> Weekly Insight
                      </h3>
-                     <div className="text-sm text-neutral-700 leading-relaxed whitespace-pre-wrap">
+                     <div className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">
                          {analysis}
                      </div>
                  </div>
              )}
 
              {habits.length === 0 ? (
-                <div className="text-center text-neutral-400 text-sm py-8">
+                <div className="text-center text-neutral-400 dark:text-neutral-600 text-sm py-8">
                   No habits to track yet.
                 </div>
              ) : (
@@ -201,14 +201,14 @@ export default function HistoryPage() {
                     return (
                         <div key={habit.id} className="space-y-3">
                             <div className="flex items-baseline justify-between">
-                                <h3 className="text-lg font-medium text-neutral-800">{habit.name}</h3>
+                                <h3 className="text-lg font-medium text-neutral-800 dark:text-neutral-200">{habit.name}</h3>
                                 <div className="flex items-center gap-3">
-                                    <span className="text-xs font-medium uppercase text-neutral-400 tracking-wider">
+                                    <span className="text-xs font-medium uppercase text-neutral-400 dark:text-neutral-500 tracking-wider">
                                         {getStreak(habit)} Day Streak
                                     </span>
                                     <button 
                                         onClick={() => toggleHistory(habit.id)}
-                                        className="text-neutral-300 hover:text-neutral-600 transition-colors p-1"
+                                        className="text-neutral-300 dark:text-neutral-600 hover:text-neutral-600 dark:hover:text-neutral-400 transition-colors p-1"
                                     >
                                         {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                                     </button>
@@ -219,7 +219,7 @@ export default function HistoryPage() {
                                 {/* Header Row */}
                                 <div className="grid grid-cols-7 gap-1 mb-2">
                                     {['M','T','W','T','F','S','S'].map((d, i) => (
-                                        <div key={i} className="text-center text-[9px] font-bold text-neutral-300 select-none">
+                                        <div key={i} className="text-center text-[9px] font-bold text-neutral-300 dark:text-neutral-600 select-none">
                                             {d}
                                         </div>
                                     ))}
@@ -244,45 +244,45 @@ export default function HistoryPage() {
 
         {/* Settings Modal (Simple Overlay) */}
         {showSettings && (
-            <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-                <div className="bg-white border border-neutral-200 shadow-2xl p-6 rounded-2xl w-full max-w-sm space-y-4">
+            <div className="absolute inset-0 bg-white/80 dark:bg-neutral-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+                <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-2xl p-6 rounded-2xl w-full max-w-sm space-y-4">
                     <div className="flex items-center justify-between">
-                        <h3 className="font-medium text-neutral-900">Enable AI Insights</h3>
-                        <button onClick={() => setShowSettings(false)}><X size={18} className="text-neutral-400" /></button>
+                        <h3 className="font-medium text-neutral-900 dark:text-neutral-100">Enable AI Insights</h3>
+                        <button onClick={() => setShowSettings(false)}><X size={18} className="text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300" /></button>
                     </div>
-                    <p className="text-xs text-neutral-500">
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400">
                         Enter your Google Gemini API Key to enable weekly reviews. The key is stored locally on your device.
                     </p>
                     <input 
                         type="password" 
                         placeholder="Paste Gemini API Key..." 
-                        className="w-full p-2 text-sm border border-neutral-200 rounded-md focus:outline-none focus:border-neutral-900"
+                        className="w-full p-2 text-sm bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-700 rounded-md focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 text-neutral-900 dark:text-neutral-100"
                         value={tempKey}
                         onChange={(e) => setTempKey(e.target.value)}
                     />
                     
                     <div className="pt-2">
-                        <label className="text-xs font-medium text-neutral-700 block mb-1">Model Name (Optional)</label>
+                        <label className="text-xs font-medium text-neutral-700 dark:text-neutral-300 block mb-1">Model Name (Optional)</label>
                         <input 
                             type="text" 
                             placeholder="e.g. gemini-1.5-flash" 
-                            className="w-full p-2 text-sm border border-neutral-200 rounded-md focus:outline-none focus:border-neutral-900 placeholder:text-neutral-300"
+                            className="w-full p-2 text-sm bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-700 rounded-md focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-300 dark:placeholder:text-neutral-600"
                             value={tempModel}
                             onChange={(e) => setTempModel(e.target.value)}
                         />
-                         <p className="text-[10px] text-neutral-400 mt-1">
+                         <p className="text-[10px] text-neutral-400 dark:text-neutral-500 mt-1">
                             Try: gemini-1.5-flash, gemini-pro, or gemini-2.0-flash-exp
                         </p>
                     </div>
 
                     <button 
                         onClick={saveKey}
-                        className="w-full py-2 bg-neutral-900 text-white text-sm font-medium rounded-md hover:bg-neutral-800 transition-colors mt-2"
+                        className="w-full py-2 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 text-sm font-medium rounded-md hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors mt-2"
                     >
                         Save & Enable
                     </button>
-                    <div className="text-[10px] text-neutral-400 text-center">
-                        <a href="https://aistudio.google.com/app/apikey" target="_blank" className="underline hover:text-neutral-600">Get a free key here</a>
+                    <div className="text-[10px] text-neutral-400 dark:text-neutral-500 text-center">
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" className="underline hover:text-neutral-600 dark:hover:text-neutral-300">Get a free key here</a>
                     </div>
                 </div>
             </div>
