@@ -53,14 +53,67 @@ npx prisma migrate dev  # Run DB migrations
 npm run dev             # Start Server
 ```
 
-## Deployment Strategy (Coolify)
-1.  **Source:** Git Repository (GitHub)
-2.  **Build Pack:** Docker (Uses project `Dockerfile`)
-3.  **Port:** 3000
-4.  **Database:** Provision a PostgreSQL service in Coolify.
+## Deployment Guide: Coolify + PostgreSQL
+
+
+
+This guide assumes you have a Coolify instance running.
+
+
+
+### Phase 1: Create the Database
+
+1.  Open your Coolify Dashboard.
+
+2.  Navigate to your Project environment.
+
+3.  Click **+ New** -> **Database** -> **PostgreSQL**.
+
+4.  Configure the database:
+
+    -   **Name:** `mini-habits-db` (or similar)
+
+    -   **User/Password:** Generate secure ones or use defaults.
+
+    -   **Public Port:** Not needed (we'll use the internal connection).
+
+5.  **Start** the database service.
+
+6.  Copy the **Connection String** (starts with `postgresql://...`).
+
+
+
+### Phase 2: Deploy the Application
+
+1.  Go back to your Project.
+
+2.  Click **+ New** -> **Application** -> **Public Repository**.
+
+3.  **Repository URL:** `https://github.com/sulistya98/mini-habits`
+
+4.  **Build Pack:** `Dockerfile` (Select this explicitly).
+
 5.  **Environment Variables:**
-    - `DATABASE_URL`: Connection string to your PostgreSQL service (e.g., `postgresql://user:pass@host:5432/db`).
-    - `AUTH_SECRET`: Generate a random string (run `openssl rand -base64 32`) for session security.
+
+    -   Go to the **Environment Variables** tab.
+
+    -   Add `DATABASE_URL`: Paste the PostgreSQL connection string you copied.
+
+    -   Add `AUTH_SECRET`: Generate a random string (e.g., `openssl rand -base64 32`) and paste it here.
+
+    -   Add `NEXTAUTH_URL`: Your full application URL (e.g., `https://habit.leadflow.id`).
+
+6.  **Deploy**: Click the Deploy button.
+
+
+
+### Verification
+
+-   Check the **Logs**. You should see `Prisma schema loaded` and `Applying migration...` followed by the server starting.
+
+-   Open your URL (`habit.leadflow.id`). You should see the login page.
+
+-   Register a new user to test the database connection.
 
 ## History
 - **Feb 07, 2026:** Initial Git setup, push to GitHub, and successful deployment to Coolify at `habit.leadflow.id`.
