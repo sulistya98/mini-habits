@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { format, subDays, isSameDay, startOfWeek, endOfWeek, eachDayOfInterval, subWeeks, isAfter } from 'date-fns';
 import { useHabitStore, Habit } from '@/store/useHabitStore';
 import { ClientOnly } from '@/components/ClientOnly';
@@ -8,13 +8,17 @@ import { cn } from '@/lib/utils';
 import { ChevronDown, ChevronUp, Sparkles, X, Loader2, Key } from 'lucide-react';
 
 export default function HistoryPage() {
-  const { habits, toggleHabit, apiKey, setApiKey, modelName, setModelName } = useHabitStore();
+  const { habits, toggleHabit, apiKey, setApiKey, modelName, setModelName, syncHabits } = useHabitStore();
   const [expandedHabits, setExpandedHabits] = useState<Record<string, boolean>>({});
   const [showSettings, setShowSettings] = useState(false);
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [tempKey, setTempKey] = useState('');
   const [tempModel, setTempModel] = useState('');
+
+  useEffect(() => {
+    syncHabits();
+  }, [syncHabits]);
 
   const today = new Date();
   

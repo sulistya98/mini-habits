@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { format } from 'date-fns';
 import { Check } from 'lucide-react';
 import { useHabitStore } from '@/store/useHabitStore';
@@ -8,9 +9,13 @@ import { ClientOnly } from '@/components/ClientOnly';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function Home() {
-  const { habits, toggleHabit, addNote } = useHabitStore();
+  const { habits, toggleHabit, addNote, syncHabits } = useHabitStore();
   const today = format(new Date(), 'yyyy-MM-dd');
   const displayDate = format(new Date(), 'EEEE, MMMM do');
+
+  useEffect(() => {
+      syncHabits();
+  }, [syncHabits]);
 
   return (
     <main className="min-h-screen bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-50 font-sans selection:bg-neutral-200 dark:selection:bg-neutral-800">

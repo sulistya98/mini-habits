@@ -1,16 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Trash2, ArrowUp, ArrowDown, Plus, Pencil, X, Check } from 'lucide-react';
 import { useHabitStore, Habit } from '@/store/useHabitStore';
 import { ClientOnly } from '@/components/ClientOnly';
 import { cn } from '@/lib/utils';
 
 export default function ManagePage() {
-  const { habits, addHabit, removeHabit, renameHabit, reorderHabits } = useHabitStore();
+  const { habits, addHabit, removeHabit, renameHabit, reorderHabits, syncHabits } = useHabitStore();
   const [newHabitName, setNewHabitName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
+
+  useEffect(() => {
+    syncHabits();
+  }, [syncHabits]);
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();

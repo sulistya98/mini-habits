@@ -9,65 +9,58 @@
 - **Framework:** Next.js 16 (App Router)
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS v4 (with Dark Mode support via `next-themes`)
-- **State Management:** Zustand v5 (with `persist` middleware for local-first storage)
+- **State Management:** Zustand v5 (synced with Server Actions)
+- **Database:** Prisma ORM (SQLite for Dev, PostgreSQL for Production)
+- **Authentication:** NextAuth.js v5 (Credentials Provider)
 - **AI Integration:** Google Generative AI (Gemini 1.5 Flash) via `src/app/api/analyze`
 - **Icons:** Lucide React
 - **Deployment:** Docker (Standalone Output) via Coolify
 
 ## Architecture Highlights
-- **Local-First:** All habit data is stored in the user's browser (LocalStorage) using Zustand's `persist` middleware. No server-side database is required.
+- **Server-Side Sync:** Habit data is stored in a database (PostgreSQL/SQLite) and accessed via Next.js Server Actions.
+- **User Management:** Users can Sign Up and Log In to access their private data across devices.
 - **Dark Mode Default:** The application defaults to Dark Mode ("Less is More" aesthetic) but includes a toggle for Light Mode.
 - **Client-Side API Key:** The user provides their own Gemini API Key, which is stored locally and sent to the server only for analysis requests.
-- **Dockerized:** The project includes a multi-stage `Dockerfile` optimized for Next.js standalone output to minimize image size and ensure consistency.
+- **Dockerized:** The project includes a multi-stage `Dockerfile` optimized for Next.js standalone output.
 
 ## Directory Structure
 ```
 /
 ├── Dockerfile              # Multi-stage build for production
-├── docker-compose.yml      # Local orchestration (optional)
-├── next.config.ts          # Configured for output: 'standalone'
+├── docker-compose.yml      # Local orchestration
+├── prisma/
+│   ├── schema.prisma       # Database Schema
+│   └── dev.db              # Local Development DB (SQLite)
 ├── src/
 │   ├── app/
-│   │   ├── api/analyze/    # AI Analysis Endpoint (Proxy)
-│   │   ├── history/        # Analytics & Visualization Page
-│   │   ├── manage/         # Habit Management Page
-│   │   ├── page.tsx        # Home Page (Daily Tracker)
-│   │   └── layout.tsx      # Root Layout
-│   ├── components/         # Reusable UI components
-│   │   └── ClientOnly.tsx  # Hydration mismatch prevention wrapper
+│   │   ├── login/          # Login Page
+│   │   ├── register/       # Registration Page
+│   │   └── ...
+│   ├── lib/
+│   │   ├── actions.ts      # Server Actions (Auth & Data)
+│   │   ├── prisma.ts       # DB Client Singleton
+│   │   └── ...
 │   ├── store/
-│   │   └── useHabitStore.ts # Global State (Zustand + Persistence)
-│   └── lib/
-│       └── utils.ts        # Helper functions (cn, etc.)
-└── public/                 # Static assets
+│   │   └── useHabitStore.ts # Global State (Syncs with Server)
+└── ...
 ```
 
 ## Key Commands
 
 ### Development
 ```bash
-npm run dev
-# Server runs on http://localhost:3000
-```
-
-### Production Build (Local)
-```bash
-npm run build
-npm start
-```
-
-### Docker Build (Local)
-```bash
-docker build -t mini-habits .
-docker run -p 3000:3000 mini-habits
+npx prisma migrate dev  # Run DB migrations
+npm run dev             # Start Server
 ```
 
 ## Deployment Strategy (Coolify)
 1.  **Source:** Git Repository (GitHub)
 2.  **Build Pack:** Docker (Uses project `Dockerfile`)
 3.  **Port:** 3000
-4.  **Environment Variables:** None required for build/runtime (API Key is client-injected).
-5.  **Persistence:** Data persists on the client device (LocalStorage). Server redeployments do not wipe user data.
+4.  **Database:** Provision a PostgreSQL service in Coolify.
+5.  **Environment Variables:**
+    - `DATABASE_URL`: Connection string to your PostgreSQL service (e.g., `postgresql://user:pass@host:5432/db`).
+    - `AUTH_SECRET`: Generate a random string (run `openssl rand -base64 32`) for session security.
 
 ## History
 - **Feb 07, 2026:** Initial Git setup, push to GitHub, and successful deployment to Coolify at `habit.leadflow.id`.
