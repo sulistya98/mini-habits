@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { fetchHabits, createHabit, deleteHabit, updateHabitName, toggleHabitLog, updateHabitNote } from '@/lib/actions';
+import { fetchHabits, createHabit, deleteHabit, updateHabitName, toggleHabitLog, updateHabitNote, reorderHabits as reorderHabitsAction } from '@/lib/actions';
 
 export interface Habit {
   id: string;
@@ -107,12 +107,13 @@ export const useHabitStore = create<HabitStore>((set, get) => ({
   },
 
   reorderHabits: (fromIndex, toIndex) => {
-    // Reordering isn't persisted to DB yet in this simple schema
     set((state) => {
       const newHabits = [...state.habits];
       const [moved] = newHabits.splice(fromIndex, 1);
       newHabits.splice(toIndex, 0, moved);
       return { habits: newHabits };
     });
+    const orderedIds = get().habits.map((h) => h.id);
+    reorderHabitsAction(orderedIds);
   },
 }));

@@ -147,7 +147,7 @@ export async function fetchHabits() {
     const habits = await prisma.habit.findMany({
         where: { userId },
         include: { logs: true },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { order: 'asc' }
     });
 
     // Transform to store format
@@ -163,8 +163,14 @@ export async function createHabit(name: string) {
     const userId = await getUserId();
     if (!userId) throw new Error('Unauthorized');
 
+    const maxOrder = await prisma.habit.aggregate({
+        where: { userId },
+        _max: { order: true },
+    });
+    const nextOrder = (maxOrder._max.order ?? -1) + 1;
+
     await prisma.habit.create({
-        data: { name, userId }
+        data: { name, userId, order: nextOrder }
     });
     revalidatePath('/');
 }
@@ -227,5 +233,20 @@ export async function updateHabitNote(habitId: string, date: string, note: strin
         update: { note },
         create: { habitId, date, note }
     });
+    revalidatePath('/');
+}
+
+export async function reorderHabits(orderedIds: string[]) {
+    const userId = await getUserId();
+    if (!userId) throw new Error('Unauthorized');
+
+    await prisma.$transaction(
+        orderedIds.map((id, index) =>
+            prisma.habit.updateMany({
+                where: { id, userId },
+                data: { order: index },
+            })
+        )
+    );
     revalidatePath('/');
 }
