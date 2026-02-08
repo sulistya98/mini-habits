@@ -29,7 +29,7 @@ No test framework is configured.
 - **Prisma** — SQLite (dev), PostgreSQL (prod)
 - **NextAuth.js v5** (beta) — Credentials provider, JWT sessions
 - **Zustand** — Client state synced with server actions
-- **Google Generative AI** — User-provided API key for habit analysis
+- **Google Generative AI** — User-provided API key for habit analysis and goal decomposition
 
 ### Key Files
 - `auth.ts` / `auth.config.ts` — NextAuth setup with Credentials provider
@@ -55,8 +55,10 @@ No test framework is configured.
 - `/login`, `/register` — Public auth pages
 - `/` — Today view (daily habit checklist with notes, swipe/chevron navigation to past dates, two-row header: day name + "Today" pill top row, centered date with chevrons bottom row)
 - `/manage` — Habit CRUD and reorder
+- `/generate` — AI-powered goal → mini habits generator (Gemini decomposes a goal into failproof mini habits, user selects and adds them)
 - `/history` — Weekly grid view + AI analysis
 - `/api/analyze` — POST endpoint for Gemini-powered habit insights
+- `/api/generate-habits` — POST endpoint for Gemini-powered goal decomposition into mini habits
 
 ### Deployment (Docker / Coolify)
 - Deployed to `habit.leadflow.id` via Coolify with PostgreSQL
