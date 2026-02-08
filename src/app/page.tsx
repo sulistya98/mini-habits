@@ -15,7 +15,8 @@ export default function Home() {
   const [transitioning, setTransitioning] = useState(false);
 
   const dateStr = format(selectedDate, 'yyyy-MM-dd');
-  const displayDate = format(selectedDate, 'EEEE, MMMM do');
+  const displayDay = format(selectedDate, 'EEEE');
+  const displayDate = format(selectedDate, 'MMMM d');
   const isCurrentDay = isToday(selectedDate);
 
   const goToPrevDay = useCallback(() => {
@@ -61,37 +62,12 @@ export default function Home() {
       >
 
         {/* Header */}
-        <header className="p-6 pt-12 pb-4 flex justify-between items-start">
-          <div className="flex-1 min-w-0">
+        <header className="px-6 pt-12 pb-4">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <button
-                onClick={goToPrevDay}
-                className="p-1.5 -ml-1.5 rounded-full text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-                aria-label="Previous day"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <h1 className="text-2xl sm:text-3xl font-light tracking-tight text-neutral-950 dark:text-neutral-50 truncate">
-                {displayDate}
-              </h1>
-              <button
-                onClick={goToNextDay}
-                disabled={isCurrentDay}
-                className={cn(
-                  "p-1.5 rounded-full transition-colors",
-                  isCurrentDay
-                    ? "text-neutral-200 dark:text-neutral-700 cursor-not-allowed"
-                    : "text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                )}
-                aria-label="Next day"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="flex items-center gap-2 mt-1">
-              <p className="text-neutral-400 dark:text-neutral-500 text-sm font-medium tracking-wide uppercase">
-                {isCurrentDay ? 'Daily Goals' : 'Past Day'}
-              </p>
+              <span className="text-sm text-neutral-400 dark:text-neutral-500 font-medium">
+                {displayDay}
+              </span>
               {!isCurrentDay && (
                 <button
                   onClick={goToToday}
@@ -101,8 +77,33 @@ export default function Home() {
                 </button>
               )}
             </div>
+            <ThemeToggle />
           </div>
-          <ThemeToggle />
+          <div className="flex items-center justify-center gap-4 mt-1">
+            <button
+              onClick={goToPrevDay}
+              className="p-1.5 rounded-full text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+              aria-label="Previous day"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <h1 className="text-2xl font-light tracking-tight text-neutral-950 dark:text-neutral-50">
+              {displayDate}
+            </h1>
+            <button
+              onClick={goToNextDay}
+              disabled={isCurrentDay}
+              className={cn(
+                "p-1.5 rounded-full transition-colors",
+                isCurrentDay
+                  ? "text-neutral-200 dark:text-neutral-700 cursor-not-allowed"
+                  : "text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              )}
+              aria-label="Next day"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
         </header>
 
         {/* List */}

@@ -53,7 +53,7 @@ No test framework is configured.
 
 ### Routes
 - `/login`, `/register` — Public auth pages
-- `/` — Today view (daily habit checklist with notes, swipe/chevron navigation to past dates)
+- `/` — Today view (daily habit checklist with notes, swipe/chevron navigation to past dates, two-row header: day name + "Today" pill top row, centered date with chevrons bottom row)
 - `/manage` — Habit CRUD and reorder
 - `/history` — Weekly grid view + AI analysis
 - `/api/analyze` — POST endpoint for Gemini-powered habit insights
