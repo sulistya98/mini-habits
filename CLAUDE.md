@@ -37,6 +37,7 @@ No test framework is configured.
 - `src/lib/actions.ts` — All server actions (auth, habit CRUD, toggle logs)
 - `src/lib/prisma.ts` — Prisma client singleton
 - `src/store/useHabitStore.ts` — Zustand store bridging client state to server actions
+- `src/hooks/useSwipe.ts` — Custom touch swipe detection hook (no external deps)
 - `prisma/schema.prisma` — Database schema
 
 ### Data Flow Pattern
@@ -52,7 +53,7 @@ No test framework is configured.
 
 ### Routes
 - `/login`, `/register` — Public auth pages
-- `/` — Today view (daily habit checklist with notes)
+- `/` — Today view (daily habit checklist with notes, swipe/chevron navigation to past dates)
 - `/manage` — Habit CRUD and reorder
 - `/history` — Weekly grid view + AI analysis
 - `/api/analyze` — POST endpoint for Gemini-powered habit insights
