@@ -34,8 +34,8 @@ ENV NEXT_TELEMETRY_DISABLED 1
 
 RUN apk add --no-cache openssl
 
-# Install prisma CLI globally for runtime migrations
-RUN npm install -g prisma
+# Install prisma CLI globally for runtime migrations (must match project version)
+RUN npm install -g prisma@6
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
