@@ -1,6 +1,6 @@
 'use server';
 
-import { signIn } from '../../auth';
+import { signIn, signOut } from '../../auth';
 import { AuthError } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
@@ -85,6 +85,48 @@ export async function registerUser(prevState: string | undefined, formData: Form
     
     return 'Failed to create user. Check server logs.';
   }
+}
+
+// --- Profile Actions ---
+
+export async function fetchUser() {
+  const session = await auth();
+  if (!session?.user?.email) return null;
+
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email },
+    select: { name: true, email: true, createdAt: true },
+  });
+  return user;
+}
+
+export async function updateUserName(prevState: string | undefined, formData: FormData) {
+  const schema = z.object({
+    name: z.string().min(1, 'Name is required').max(50, 'Name is too long'),
+  });
+
+  const parsed = schema.safeParse({ name: formData.get('name') });
+  if (!parsed.success) {
+    return parsed.error.issues[0].message;
+  }
+
+  const session = await auth();
+  if (!session?.user?.email) return 'Unauthorized';
+
+  try {
+    await prisma.user.update({
+      where: { email: session.user.email },
+      data: { name: parsed.data.name },
+    });
+    revalidatePath('/profile');
+    return 'success';
+  } catch {
+    return 'Failed to update name.';
+  }
+}
+
+export async function logOut() {
+  await signOut({ redirectTo: '/login' });
 }
 
 // --- Data Actions ---

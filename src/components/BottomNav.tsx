@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { CheckSquare, SlidersHorizontal, CalendarDays } from 'lucide-react';
+import { CheckSquare, SlidersHorizontal, CalendarDays, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function BottomNav() {
@@ -12,6 +12,7 @@ export function BottomNav() {
     { href: '/', label: 'Today', icon: CheckSquare },
     { href: '/manage', label: 'Manage', icon: SlidersHorizontal },
     { href: '/history', label: 'History', icon: CalendarDays },
+    { href: '/profile', label: 'Profile', icon: UserCircle },
   ];
 
   return (
