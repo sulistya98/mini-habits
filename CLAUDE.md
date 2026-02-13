@@ -62,7 +62,7 @@ No test framework is configured.
 - `/generate` — Conversational AI habit coach (multi-turn chat with Gemini, saved conversations, inline habit proposals with Add buttons)
 - `/history` — Weekly grid view + AI analysis
 - `/api/analyze` — POST endpoint for Gemini-powered habit insights (auth required, model allowlisted)
-- `/api/generate-habits` — POST endpoint for multi-turn Gemini chat (auth required, model allowlisted, accepts messages array + existingHabits)
+- `/api/generate-habits` — POST endpoint for multi-turn Gemini chat (auth required, model allowlisted, accepts messages array + existingHabits). System prompt instructs AI to answer how-to questions with actionable tips instead of re-proposing habits
 - `/api/cron/reminders` — GET endpoint hit every minute by cron; sends WhatsApp reminders via gowa API; protected by `CRON_SECRET` Bearer token (header only, no query param)
 
 ### Deployment (Docker / Coolify)
