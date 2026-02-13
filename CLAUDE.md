@@ -53,15 +53,16 @@ No test framework is configured.
 - **Habit** — id, name, reminderTime (HH:mm format, nullable), userId, logs[], reminderLogs[]
 - **HabitLog** — id, date (YYYY-MM-DD string), note, habitId; unique on [habitId, date]; cascade delete with parent Habit
 - **ReminderLog** — id, habitId, date (YYYY-MM-DD), sentAt; unique on [habitId, date]; cascade delete with parent Habit; prevents duplicate WhatsApp reminders
+- **Conversation** — id, title, messages (JSON array of {role, content, habits?}), userId; cascade delete with parent User; indexed on userId
 
 ### Routes
 - `/login`, `/register` — Public auth pages
 - `/` — Today view (daily habit checklist with notes, swipe/chevron navigation to past dates, two-row header: day name + "Today" pill top row, centered date with chevrons bottom row)
 - `/manage` — Habit CRUD, reorder, and per-habit reminder time
-- `/generate` — AI-powered goal → mini habits generator (Gemini decomposes a goal into failproof mini habits, user selects and adds them)
+- `/generate` — Conversational AI habit coach (multi-turn chat with Gemini, saved conversations, inline habit proposals with Add buttons)
 - `/history` — Weekly grid view + AI analysis
 - `/api/analyze` — POST endpoint for Gemini-powered habit insights (auth required, model allowlisted)
-- `/api/generate-habits` — POST endpoint for Gemini-powered goal decomposition (auth required, model allowlisted)
+- `/api/generate-habits` — POST endpoint for multi-turn Gemini chat (auth required, model allowlisted, accepts messages array + existingHabits)
 - `/api/cron/reminders` — GET endpoint hit every minute by cron; sends WhatsApp reminders via gowa API; protected by `CRON_SECRET` Bearer token (header only, no query param)
 
 ### Deployment (Docker / Coolify)

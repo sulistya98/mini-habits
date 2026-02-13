@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { fetchHabits, createHabit, deleteHabit, updateHabitName, toggleHabitLog, updateHabitNote, reorderHabits as reorderHabitsAction, updateHabitReminderTime } from '@/lib/actions';
+import { fetchHabits, createHabit, deleteHabit, updateHabitName, toggleHabitLog, updateHabitNote, reorderHabits as reorderHabitsAction, updateHabitReminderTime, fetchConversations, fetchConversation, createConversation, saveConversationMessages, deleteConversation } from '@/lib/actions';
 
 export interface Habit {
   id: string;
@@ -9,12 +9,29 @@ export interface Habit {
   notes?: Record<string, string>; // 'YYYY-MM-DD': "Note text"
 }
 
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  habits?: { name: string; why: string }[] | null;
+}
+
+export interface ConversationSummary {
+  id: string;
+  title: string;
+  updatedAt: Date;
+}
+
 interface HabitStore {
   habits: Habit[];
   apiKey: string | null;
   modelName: string | null;
   isLoading: boolean;
-  
+
+  // Chat state
+  activeConversationId: string | null;
+  chatMessages: ChatMessage[];
+  conversations: ConversationSummary[];
+
   // Actions
   syncHabits: () => Promise<void>;
   setApiKey: (key: string) => void;
@@ -24,8 +41,19 @@ interface HabitStore {
   renameHabit: (id: string, newName: string) => Promise<void>;
   toggleHabit: (id: string, date: string) => Promise<void>;
   addNote: (id: string, date: string, note: string) => Promise<void>;
-  reorderHabits: (fromIndex: number, toIndex: number) => void; // Keeping local for now
+  reorderHabits: (fromIndex: number, toIndex: number) => void;
   setReminderTime: (id: string, time: string | null) => Promise<void>;
+
+  // Chat actions
+  setActiveConversation: (id: string | null, messages?: ChatMessage[]) => void;
+  addChatMessage: (msg: ChatMessage) => void;
+  setChatMessages: (msgs: ChatMessage[]) => void;
+  clearChat: () => void;
+  syncConversations: () => Promise<void>;
+  loadConversation: (id: string) => Promise<void>;
+  startNewConversation: () => Promise<string>;
+  removeConversation: (id: string) => Promise<void>;
+  persistMessages: () => Promise<void>;
 }
 
 export const useHabitStore = create<HabitStore>((set, get) => ({
@@ -33,6 +61,11 @@ export const useHabitStore = create<HabitStore>((set, get) => ({
   apiKey: typeof window !== 'undefined' ? localStorage.getItem('gemini_api_key') : null,
   modelName: typeof window !== 'undefined' ? localStorage.getItem('gemini_model_name') : null,
   isLoading: true,
+
+  // Chat state
+  activeConversationId: null,
+  chatMessages: [],
+  conversations: [],
 
   syncHabits: async () => {
       set({ isLoading: true });
@@ -56,10 +89,8 @@ export const useHabitStore = create<HabitStore>((set, get) => ({
   },
 
   addHabit: async (name) => {
-    // Optimistic update could be tricky without ID, but let's wait for server for simplicity or generate temp ID
-    // Choosing wait-for-server for simplicity of IDs
     await createHabit(name);
-    await get().syncHabits(); 
+    await get().syncHabits();
   },
 
   removeHabit: async (id) => {
@@ -126,5 +157,80 @@ export const useHabitStore = create<HabitStore>((set, get) => ({
       ),
     }));
     await updateHabitReminderTime(id, time);
+  },
+
+  // Chat actions
+
+  setActiveConversation: (id, messages) => {
+    set({
+      activeConversationId: id,
+      chatMessages: messages || [],
+    });
+  },
+
+  addChatMessage: (msg) => {
+    set((state) => ({
+      chatMessages: [...state.chatMessages, msg],
+    }));
+  },
+
+  setChatMessages: (msgs) => {
+    set({ chatMessages: msgs });
+  },
+
+  clearChat: () => {
+    set({ activeConversationId: null, chatMessages: [] });
+  },
+
+  syncConversations: async () => {
+    try {
+      const convos = await fetchConversations();
+      set({ conversations: convos });
+    } catch (e) {
+      console.error("Failed to sync conversations", e);
+    }
+  },
+
+  loadConversation: async (id) => {
+    try {
+      const convo = await fetchConversation(id);
+      set({
+        activeConversationId: id,
+        chatMessages: (convo.messages as unknown as ChatMessage[]) || [],
+      });
+    } catch (e) {
+      console.error("Failed to load conversation", e);
+    }
+  },
+
+  startNewConversation: async () => {
+    const convo = await createConversation('New Conversation');
+    set({
+      activeConversationId: convo.id,
+      chatMessages: [],
+    });
+    await get().syncConversations();
+    return convo.id;
+  },
+
+  removeConversation: async (id) => {
+    set((state) => ({
+      conversations: state.conversations.filter((c) => c.id !== id),
+      ...(state.activeConversationId === id
+        ? { activeConversationId: null, chatMessages: [] }
+        : {}),
+    }));
+    await deleteConversation(id);
+  },
+
+  persistMessages: async () => {
+    const { activeConversationId, chatMessages } = get();
+    if (!activeConversationId) return;
+    try {
+      await saveConversationMessages(activeConversationId, chatMessages);
+      await get().syncConversations();
+    } catch (e) {
+      console.error("Failed to persist messages", e);
+    }
   },
 }));

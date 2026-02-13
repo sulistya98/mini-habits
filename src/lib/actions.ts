@@ -387,3 +387,80 @@ export async function updateHabitReminderTime(habitId: string, reminderTime: str
     });
     revalidatePath('/manage');
 }
+
+// --- Conversation Actions ---
+
+export async function createConversation(title: string) {
+    const userId = await getUserId();
+    if (!userId) throw new Error('Unauthorized');
+
+    const trimmed = title.trim() || 'New Conversation';
+    if (trimmed.length > 200) throw new Error('Title too long.');
+
+    const conversation = await prisma.conversation.create({
+        data: { title: trimmed, messages: [], userId },
+        select: { id: true, title: true },
+    });
+    return conversation;
+}
+
+export async function fetchConversations() {
+    const userId = await getUserId();
+    if (!userId) return [];
+
+    return prisma.conversation.findMany({
+        where: { userId },
+        select: { id: true, title: true, updatedAt: true },
+        orderBy: { updatedAt: 'desc' },
+        take: 50,
+    });
+}
+
+export async function fetchConversation(id: string) {
+    const userId = await getUserId();
+    if (!userId) throw new Error('Unauthorized');
+
+    const conversation = await prisma.conversation.findFirst({
+        where: { id, userId },
+    });
+    if (!conversation) throw new Error('Conversation not found');
+    return conversation;
+}
+
+export async function saveConversationMessages(id: string, messages: unknown[]) {
+    const userId = await getUserId();
+    if (!userId) throw new Error('Unauthorized');
+
+    if (messages.length > 200) throw new Error('Too many messages.');
+
+    const conversation = await prisma.conversation.findFirst({
+        where: { id, userId },
+        select: { title: true },
+    });
+    if (!conversation) throw new Error('Conversation not found');
+
+    const firstUserMsg = messages.find(
+        (m) => typeof m === 'object' && m !== null && 'role' in m && (m as { role: string }).role === 'user'
+    ) as { role: string; content: string } | undefined;
+    const shouldUpdateTitle = conversation.title === 'New Conversation' && firstUserMsg?.content;
+    const newTitle = shouldUpdateTitle
+        ? firstUserMsg.content.slice(0, 100)
+        : undefined;
+
+    await prisma.conversation.update({
+        where: { id },
+        data: {
+            messages: messages as Parameters<typeof prisma.conversation.update>[0]['data']['messages'],
+            ...(newTitle ? { title: newTitle } : {}),
+        },
+    });
+}
+
+export async function deleteConversation(id: string) {
+    const userId = await getUserId();
+    if (!userId) throw new Error('Unauthorized');
+
+    await prisma.conversation.deleteMany({
+        where: { id, userId },
+    });
+}
