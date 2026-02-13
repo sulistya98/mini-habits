@@ -12,8 +12,11 @@ model User {
   email     String   @unique
   password  String
   name      String?
-  phone     String?
-  timezone  String?  @default("Asia/Jakarta")
+  phone          String?
+  phoneVerified  Boolean  @default(false)
+  phoneOtp       String?
+  phoneOtpExpiry DateTime?
+  timezone       String?  @default("Asia/Jakarta")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

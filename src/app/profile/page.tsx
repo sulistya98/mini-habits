@@ -1,18 +1,22 @@
 'use client';
 
 import { useEffect, useState, useActionState } from 'react';
-import { Pencil, X, Check, LogOut, Mail, Calendar, Phone, Globe } from 'lucide-react';
-import { fetchUser, updateUserName, updateUserPhone, updateUserTimezone, logOut } from '@/lib/actions';
+import { Pencil, X, Check, LogOut, Mail, Calendar, Phone, Globe, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { fetchUser, updateUserName, updateUserPhone, updateUserTimezone, sendPhoneOtp, verifyPhoneOtp, logOut } from '@/lib/actions';
 import { ALLOWED_TIMEZONES } from '@/lib/timezones';
 import { cn } from '@/lib/utils';
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<{ name: string | null; email: string; phone: string | null; timezone: string | null; createdAt: Date } | null>(null);
+  const [user, setUser] = useState<{ name: string | null; email: string; phone: string | null; phoneVerified: boolean; timezone: string | null; createdAt: Date } | null>(null);
   const [editing, setEditing] = useState(false);
   const [editingPhone, setEditingPhone] = useState(false);
   const [editingTimezone, setEditingTimezone] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [otpSending, setOtpSending] = useState(false);
+  const [otpMessage, setOtpMessage] = useState<string | null>(null);
   const [state, formAction, isPending] = useActionState(updateUserName, undefined);
   const [phoneState, phoneAction, phonePending] = useActionState(updateUserPhone, undefined);
+  const [otpState, otpAction, otpPending] = useActionState(verifyPhoneOtp, undefined);
   const [tzState, tzAction, tzPending] = useActionState(updateUserTimezone, undefined);
 
   useEffect(() => {
@@ -29,9 +33,19 @@ export default function ProfilePage() {
   useEffect(() => {
     if (phoneState === 'success') {
       setEditingPhone(false);
+      setVerifying(false);
+      setOtpMessage(null);
       fetchUser().then(setUser);
     }
   }, [phoneState]);
+
+  useEffect(() => {
+    if (otpState === 'verified') {
+      setVerifying(false);
+      setOtpMessage(null);
+      fetchUser().then(setUser);
+    }
+  }, [otpState]);
 
   useEffect(() => {
     if (tzState === 'success') {
@@ -158,6 +172,13 @@ export default function ProfilePage() {
                   <span className="text-neutral-800 dark:text-neutral-200">
                     {user.phone || 'Not set'}
                   </span>
+                  {user.phone && (
+                    user.phoneVerified ? (
+                      <ShieldCheck className="w-4 h-4 text-green-500" />
+                    ) : (
+                      <ShieldAlert className="w-4 h-4 text-amber-500" />
+                    )
+                  )}
                 </div>
                 <button
                   onClick={() => setEditingPhone(true)}
@@ -169,6 +190,63 @@ export default function ProfilePage() {
             )}
             {phoneState && phoneState !== 'success' && (
               <p className="text-red-500 text-xs mt-1">{phoneState}</p>
+            )}
+
+            {/* Verification flow */}
+            {user.phone && !user.phoneVerified && !editingPhone && (
+              <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
+                {!verifying ? (
+                  <button
+                    onClick={async () => {
+                      setOtpSending(true);
+                      setOtpMessage(null);
+                      const result = await sendPhoneOtp();
+                      setOtpSending(false);
+                      if (result === 'sent') {
+                        setVerifying(true);
+                      } else {
+                        setOtpMessage(result);
+                      }
+                    }}
+                    disabled={otpSending}
+                    className="text-xs font-medium text-amber-600 dark:text-amber-400 hover:underline disabled:opacity-50"
+                  >
+                    {otpSending ? 'Sending code...' : 'Verify this number'}
+                  </button>
+                ) : (
+                  <form action={otpAction} className="flex items-center gap-2">
+                    <input
+                      name="otp"
+                      placeholder="6-digit code"
+                      maxLength={6}
+                      className="w-28 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 rounded px-3 py-1.5 text-sm outline-none focus:ring-1 focus:ring-neutral-300 dark:focus:ring-neutral-600 text-center tracking-widest"
+                      autoFocus
+                    />
+                    <button type="submit" disabled={otpPending} className="text-green-600 dark:text-green-400 text-xs font-medium disabled:opacity-50">
+                      Verify
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setOtpSending(true);
+                        const result = await sendPhoneOtp();
+                        setOtpSending(false);
+                        setOtpMessage(result === 'sent' ? 'New code sent!' : result);
+                      }}
+                      disabled={otpSending}
+                      className="text-neutral-400 dark:text-neutral-500 text-xs hover:underline disabled:opacity-50"
+                    >
+                      Resend
+                    </button>
+                  </form>
+                )}
+                {otpState && otpState !== 'verified' && (
+                  <p className="text-red-500 text-xs mt-1">{otpState}</p>
+                )}
+                {otpMessage && (
+                  <p className={cn("text-xs mt-1", otpMessage === 'New code sent!' ? 'text-green-500' : 'text-red-500')}>{otpMessage}</p>
+                )}
+              </div>
             )}
           </div>
 

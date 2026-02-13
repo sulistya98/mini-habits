@@ -3,7 +3,9 @@
 import { signIn, signOut } from '../../auth';
 import { AuthError } from 'next-auth';
 import { prisma } from '@/lib/prisma';
+import { sendWhatsAppMessage } from '@/lib/gowa';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { z } from 'zod';
 import { auth } from '../../auth';
 import { revalidatePath } from 'next/cache';
@@ -91,7 +93,7 @@ export async function fetchUser() {
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
-    select: { name: true, email: true, phone: true, timezone: true, createdAt: true },
+    select: { name: true, email: true, phone: true, phoneVerified: true, timezone: true, createdAt: true },
   });
   return user;
 }
@@ -134,13 +136,77 @@ export async function updateUserPhone(prevState: string | undefined, formData: F
   try {
     await prisma.user.update({
       where: { email: session.user.email },
-      data: { phone: raw || null },
+      data: { phone: raw || null, phoneVerified: false, phoneOtp: null, phoneOtpExpiry: null },
     });
     revalidatePath('/profile');
     return 'success';
   } catch {
     return 'Failed to update phone.';
   }
+}
+
+export async function sendPhoneOtp() {
+  const session = await auth();
+  if (!session?.user?.email) return 'Unauthorized';
+
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email },
+    select: { phone: true, phoneVerified: true },
+  });
+
+  if (!user?.phone) return 'No phone number set.';
+  if (user.phoneVerified) return 'Phone already verified.';
+
+  const otp = crypto.randomInt(100000, 999999).toString();
+  const expiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+  await prisma.user.update({
+    where: { email: session.user.email },
+    data: { phoneOtp: otp, phoneOtpExpiry: expiry },
+  });
+
+  try {
+    await sendWhatsAppMessage(user.phone, `Your Mini Habits verification code is: ${otp}`);
+    return 'sent';
+  } catch {
+    return 'Failed to send OTP. Check your WhatsApp number.';
+  }
+}
+
+export async function verifyPhoneOtp(prevState: string | undefined, formData: FormData) {
+  const code = (formData.get('otp') as string || '').trim();
+
+  if (!/^\d{6}$/.test(code)) {
+    return 'Enter the 6-digit code.';
+  }
+
+  const session = await auth();
+  if (!session?.user?.email) return 'Unauthorized';
+
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email },
+    select: { phoneOtp: true, phoneOtpExpiry: true },
+  });
+
+  if (!user?.phoneOtp || !user.phoneOtpExpiry) {
+    return 'No verification code pending. Send a new one.';
+  }
+
+  if (new Date() > user.phoneOtpExpiry) {
+    return 'Code expired. Send a new one.';
+  }
+
+  if (user.phoneOtp !== code) {
+    return 'Incorrect code.';
+  }
+
+  await prisma.user.update({
+    where: { email: session.user.email },
+    data: { phoneVerified: true, phoneOtp: null, phoneOtpExpiry: null },
+  });
+
+  revalidatePath('/profile');
+  return 'verified';
 }
 
 import { ALLOWED_TIMEZONES } from '@/lib/timezones';

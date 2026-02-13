@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
   }
 
   const users = await prisma.user.findMany({
-    where: { phone: { not: null } },
+    where: { phone: { not: null }, phoneVerified: true },
     include: {
       habits: {
         where: { reminderTime: { not: null } },
