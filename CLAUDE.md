@@ -34,9 +34,10 @@ No test framework is configured.
 ### Key Files
 - `auth.ts` / `auth.config.ts` — NextAuth setup with Credentials provider
 - `middleware.ts` — Protects all routes except `/login` and `/register`
-- `src/lib/actions.ts` — All server actions (auth, habit CRUD, toggle logs)
+- `src/lib/actions.ts` — All server actions (auth, habit CRUD, toggle logs, reminders)
 - `src/lib/prisma.ts` — Prisma client singleton
 - `src/lib/gowa.ts` — WhatsApp message sender via self-hosted gowa API
+- `src/lib/timezones.ts` — Shared timezone list (cannot live in `actions.ts` — see Conventions)
 - `src/store/useHabitStore.ts` — Zustand store bridging client state to server actions
 - `src/hooks/useSwipe.ts` — Custom touch swipe detection hook (no external deps)
 - `prisma/schema.prisma` — Database schema
@@ -56,7 +57,7 @@ No test framework is configured.
 ### Routes
 - `/login`, `/register` — Public auth pages
 - `/` — Today view (daily habit checklist with notes, swipe/chevron navigation to past dates, two-row header: day name + "Today" pill top row, centered date with chevrons bottom row)
-- `/manage` — Habit CRUD and reorder
+- `/manage` — Habit CRUD, reorder, and per-habit reminder time
 - `/generate` — AI-powered goal → mini habits generator (Gemini decomposes a goal into failproof mini habits, user selects and adds them)
 - `/history` — Weekly grid view + AI analysis
 - `/api/analyze` — POST endpoint for Gemini-powered habit insights
@@ -100,3 +101,6 @@ CRON_SECRET     # Secret for authenticating cron endpoint requests
 - `cn()` utility (clsx + tailwind-merge) for class name composition
 - Redirect errors are caught and re-thrown separately in server actions
 - Habit reordering is local-only (Zustand), not persisted to DB
+- **`'use server'` files can ONLY export async functions** — never export constants, arrays, or objects from `actions.ts`. Put shared data (e.g., `ALLOWED_TIMEZONES`) in a separate file like `src/lib/timezones.ts`
+- Local dev requires Node >= 20 (use `nvm use 24` — v18 won't build Next.js 16)
+- No local PostgreSQL; migrations are created manually as SQL files and applied on deploy via `prisma migrate deploy`
