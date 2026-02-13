@@ -2,7 +2,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 import { auth } from "../../../../auth";
 
-const ALLOWED_MODELS = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash"];
+const ALLOWED_MODELS = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash", "gemini-2.0-flash-exp", "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-pro"];
 
 export async function POST(req: Request) {
   try {
@@ -59,8 +59,9 @@ Example format: [{"name": "Put on running shoes", "why": "Removes the friction o
     return NextResponse.json({ habits });
   } catch (error: any) {
     console.error("Generate Habits Error:", error?.message);
+    const message = error?.message || "Failed to generate habits";
     return NextResponse.json(
-      { error: "Failed to generate habits" },
+      { error: message },
       { status: 500 }
     );
   }

@@ -108,7 +108,7 @@ CRON_SECRET     # Secret for authenticating cron endpoint requests
 
 ### Security
 - **API routes require auth** — `/api/analyze` and `/api/generate-habits` call `auth()` and return 401 if not logged in. The middleware matcher excludes `/api/*`, so auth is enforced inside each route handler
-- **Gemini model allowlist** — only `gemini-1.5-flash`, `gemini-1.5-pro`, `gemini-2.0-flash` accepted; unknown model names fall back to `gemini-1.5-flash`
+- **Gemini model allowlist** — accepted models: `gemini-1.5-flash`, `gemini-1.5-pro`, `gemini-2.0-flash`, `gemini-2.0-flash-exp`, `gemini-2.5-flash`, `gemini-2.5-flash-lite`, `gemini-pro`; unknown model names fall back to `gemini-1.5-flash`
 - **Cron secret: Bearer header only** — no query param to avoid leaking in logs/referrer
 - **No PII in error responses** — cron errors reference habit IDs only (no emails or names); AI routes return generic error messages
 - **Input validation on all server actions** — habit names 1-100 chars, dates must match `YYYY-MM-DD`, notes max 500 chars, reorder array max 100 items

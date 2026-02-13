@@ -2,7 +2,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 import { auth } from "../../../../auth";
 
-const ALLOWED_MODELS = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash"];
+const ALLOWED_MODELS = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash", "gemini-2.0-flash-exp", "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-pro"];
 
 export async function POST(req: Request) {
   try {
@@ -43,8 +43,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ result: text });
   } catch (error: any) {
     console.error("AI Analysis Error:", error?.message);
+    const message = error?.message || "Failed to generate insight";
     return NextResponse.json(
-      { error: "Failed to generate insight" },
+      { error: message },
       { status: 500 }
     );
   }
