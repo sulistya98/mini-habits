@@ -49,7 +49,7 @@ No test framework is configured.
 4. Path revalidation (`revalidatePath`) ensures cache coherence after mutations
 
 ### Database Models
-- **User** — id, email, password (bcrypt), name, phone (WhatsApp number with country code), timezone (default "Asia/Jakarta"), habits[]
+- **User** — id, email, password (bcrypt), name, phone (WhatsApp number with country code), phoneVerified (boolean, default false), phoneOtp/phoneOtpExpiry (transient OTP storage), timezone (default "Asia/Jakarta"), habits[]
 - **Habit** — id, name, reminderTime (HH:mm format, nullable), userId, logs[], reminderLogs[]
 - **HabitLog** — id, date (YYYY-MM-DD string), note, habitId; unique on [habitId, date]; cascade delete with parent Habit
 - **ReminderLog** — id, habitId, date (YYYY-MM-DD), sentAt; unique on [habitId, date]; cascade delete with parent Habit; prevents duplicate WhatsApp reminders
@@ -78,9 +78,10 @@ No test framework is configured.
 
 ### WhatsApp Reminders
 - Users set their phone number and timezone on the Profile page
+- **Phone numbers require OTP verification** before reminders are sent. A 6-digit code is sent via WhatsApp, expires after 5 minutes. Changing the phone number resets verification. Profile page shows shield icon (green=verified, amber=unverified)
 - Per-habit reminder times are set on the Manage page (bell icon → time picker)
 - A cron job on the Mac host hits `/api/cron/reminders` every minute via `Authorization: Bearer` header
-- The endpoint checks each user's current time in their timezone, matches against habit reminder times, sends WhatsApp messages via gowa (`gowa.leadflow.id`), and logs to `ReminderLog` to prevent duplicates
+- The endpoint only queries users with `phoneVerified: true`, checks current time in their timezone, matches against habit reminder times, sends WhatsApp messages via gowa (`gowa.leadflow.id`), and logs to `ReminderLog` to prevent duplicates
 - One message per habit, format: `⏰ Hey {name}! Time to: {habitName}`
 
 ### Environment Variables
@@ -112,3 +113,4 @@ CRON_SECRET     # Secret for authenticating cron endpoint requests
 - **No PII in error responses** — cron errors reference habit IDs only (no emails or names); AI routes return generic error messages
 - **Input validation on all server actions** — habit names 1-100 chars, dates must match `YYYY-MM-DD`, notes max 500 chars, reorder array max 100 items
 - **No debug logging of PII** — registration actions don't log emails or full error objects
+- **Phone OTP verification** — reminders only sent to `phoneVerified: true` users; prevents abuse of WhatsApp messaging to arbitrary numbers
