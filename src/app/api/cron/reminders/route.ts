@@ -3,9 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { sendWhatsAppMessage } from '@/lib/gowa';
 
 export async function GET(req: NextRequest) {
-  const secret =
-    req.nextUrl.searchParams.get('secret') ||
-    req.headers.get('authorization')?.replace('Bearer ', '');
+  const secret = req.headers.get('authorization')?.replace('Bearer ', '');
 
   if (!process.env.CRON_SECRET || secret !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -59,7 +57,7 @@ export async function GET(req: NextRequest) {
 
         sent++;
       } catch (err: any) {
-        errors.push(`${habit.name} (${user.email}): ${err.message}`);
+        errors.push(`habit ${habit.id}: ${err.message}`);
       }
     }
   }

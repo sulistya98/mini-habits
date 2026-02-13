@@ -1,8 +1,16 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
+import { auth } from "../../../../auth";
+
+const ALLOWED_MODELS = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash"];
 
 export async function POST(req: Request) {
   try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { apiKey, context, modelName } = await req.json();
 
     if (!apiKey) {
@@ -10,8 +18,7 @@ export async function POST(req: Request) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    // Use user-provided model or default to gemini-1.5-flash
-    const targetModel = modelName || "gemini-1.5-flash";
+    const targetModel = ALLOWED_MODELS.includes(modelName) ? modelName : "gemini-1.5-flash";
     const model = genAI.getGenerativeModel({ model: targetModel });
 
     const prompt = `
@@ -35,9 +42,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ result: text });
   } catch (error: any) {
-    console.error("AI Analysis Error:", error);
+    console.error("AI Analysis Error:", error?.message);
     return NextResponse.json(
-      { error: error.message || "Failed to generate insight" },
+      { error: "Failed to generate insight" },
       { status: 500 }
     );
   }

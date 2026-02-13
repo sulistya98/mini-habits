@@ -51,11 +51,8 @@ export async function registerUser(prevState: string | undefined, formData: Form
   const { email, password, name } = parsed.data;
 
   try {
-    console.log(`Attempting to register user: ${email}`); // Debug Log
-
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
-        console.log('User already exists');
         return 'User already exists.';
     }
 
@@ -67,7 +64,6 @@ export async function registerUser(prevState: string | undefined, formData: Form
         name: name || email.split('@')[0],
       },
     });
-    console.log('User created successfully in DB');
     
     // Auto login
     await signIn('credentials', { email, password });
@@ -77,7 +73,7 @@ export async function registerUser(prevState: string | undefined, formData: Form
         throw error;
     }
     
-    console.error("Registration Error:", error); // Critical for debugging
+    console.error("Registration error:", (error as Error)?.message);
     
     if (error instanceof AuthError) {
         return "Authentication failed during auto-login.";
@@ -210,6 +206,9 @@ export async function createHabit(name: string) {
     const userId = await getUserId();
     if (!userId) throw new Error('Unauthorized');
 
+    const trimmed = name.trim();
+    if (!trimmed || trimmed.length > 100) throw new Error('Habit name must be 1-100 characters.');
+
     const maxOrder = await prisma.habit.aggregate({
         where: { userId },
         _max: { order: true },
@@ -217,7 +216,7 @@ export async function createHabit(name: string) {
     const nextOrder = (maxOrder._max.order ?? -1) + 1;
 
     await prisma.habit.create({
-        data: { name, userId, order: nextOrder }
+        data: { name: trimmed, userId, order: nextOrder }
     });
     revalidatePath('/');
 }
@@ -236,9 +235,12 @@ export async function updateHabitName(id: string, name: string) {
     const userId = await getUserId();
     if (!userId) throw new Error('Unauthorized');
 
+    const trimmed = name.trim();
+    if (!trimmed || trimmed.length > 100) throw new Error('Habit name must be 1-100 characters.');
+
     await prisma.habit.updateMany({
         where: { id, userId },
-        data: { name }
+        data: { name: trimmed }
     });
     revalidatePath('/');
 }
@@ -246,7 +248,9 @@ export async function updateHabitName(id: string, name: string) {
 export async function toggleHabitLog(habitId: string, date: string) {
     const userId = await getUserId();
     if (!userId) throw new Error('Unauthorized');
-    
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error('Invalid date format.');
+
     // Check if habit belongs to user
     const habit = await prisma.habit.findFirst({ where: { id: habitId, userId } });
     if (!habit) throw new Error('Habit not found');
@@ -271,7 +275,10 @@ export async function updateHabitNote(habitId: string, date: string, note: strin
     const userId = await getUserId();
     if (!userId) throw new Error('Unauthorized');
 
-     // Check if habit belongs to user
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error('Invalid date format.');
+    if (note.length > 500) throw new Error('Note is too long.');
+
+    // Check if habit belongs to user
     const habit = await prisma.habit.findFirst({ where: { id: habitId, userId } });
     if (!habit) throw new Error('Habit not found');
 
@@ -286,6 +293,8 @@ export async function updateHabitNote(habitId: string, date: string, note: strin
 export async function reorderHabits(orderedIds: string[]) {
     const userId = await getUserId();
     if (!userId) throw new Error('Unauthorized');
+
+    if (!orderedIds.length || orderedIds.length > 100) throw new Error('Invalid habit list.');
 
     await prisma.$transaction(
         orderedIds.map((id, index) =>

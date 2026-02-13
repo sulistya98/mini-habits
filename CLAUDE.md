@@ -60,9 +60,9 @@ No test framework is configured.
 - `/manage` — Habit CRUD, reorder, and per-habit reminder time
 - `/generate` — AI-powered goal → mini habits generator (Gemini decomposes a goal into failproof mini habits, user selects and adds them)
 - `/history` — Weekly grid view + AI analysis
-- `/api/analyze` — POST endpoint for Gemini-powered habit insights
-- `/api/generate-habits` — POST endpoint for Gemini-powered goal decomposition into mini habits
-- `/api/cron/reminders` — GET endpoint hit every minute by cron; sends WhatsApp reminders via gowa API; protected by `CRON_SECRET` query param or Bearer token
+- `/api/analyze` — POST endpoint for Gemini-powered habit insights (auth required, model allowlisted)
+- `/api/generate-habits` — POST endpoint for Gemini-powered goal decomposition (auth required, model allowlisted)
+- `/api/cron/reminders` — GET endpoint hit every minute by cron; sends WhatsApp reminders via gowa API; protected by `CRON_SECRET` Bearer token (header only, no query param)
 
 ### Deployment (Docker / Coolify)
 - Deployed to `habit.leadflow.id` via Coolify with PostgreSQL
@@ -79,7 +79,7 @@ No test framework is configured.
 ### WhatsApp Reminders
 - Users set their phone number and timezone on the Profile page
 - Per-habit reminder times are set on the Manage page (bell icon → time picker)
-- A cron job on the Mac host hits `/api/cron/reminders` every minute
+- A cron job on the Mac host hits `/api/cron/reminders` every minute via `Authorization: Bearer` header
 - The endpoint checks each user's current time in their timezone, matches against habit reminder times, sends WhatsApp messages via gowa (`gowa.leadflow.id`), and logs to `ReminderLog` to prevent duplicates
 - One message per habit, format: `⏰ Hey {name}! Time to: {habitName}`
 
@@ -104,3 +104,11 @@ CRON_SECRET     # Secret for authenticating cron endpoint requests
 - **`'use server'` files can ONLY export async functions** — never export constants, arrays, or objects from `actions.ts`. Put shared data (e.g., `ALLOWED_TIMEZONES`) in a separate file like `src/lib/timezones.ts`
 - Local dev requires Node >= 20 (use `nvm use 24` — v18 won't build Next.js 16)
 - No local PostgreSQL; migrations are created manually as SQL files and applied on deploy via `prisma migrate deploy`
+
+### Security
+- **API routes require auth** — `/api/analyze` and `/api/generate-habits` call `auth()` and return 401 if not logged in. The middleware matcher excludes `/api/*`, so auth is enforced inside each route handler
+- **Gemini model allowlist** — only `gemini-1.5-flash`, `gemini-1.5-pro`, `gemini-2.0-flash` accepted; unknown model names fall back to `gemini-1.5-flash`
+- **Cron secret: Bearer header only** — no query param to avoid leaking in logs/referrer
+- **No PII in error responses** — cron errors reference habit IDs only (no emails or names); AI routes return generic error messages
+- **Input validation on all server actions** — habit names 1-100 chars, dates must match `YYYY-MM-DD`, notes max 500 chars, reorder array max 100 items
+- **No debug logging of PII** — registration actions don't log emails or full error objects

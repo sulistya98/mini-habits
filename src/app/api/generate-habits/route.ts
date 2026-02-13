@@ -1,8 +1,16 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
+import { auth } from "../../../../auth";
+
+const ALLOWED_MODELS = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash"];
 
 export async function POST(req: Request) {
   try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { apiKey, modelName, goal, context } = await req.json();
 
     if (!apiKey) {
@@ -14,7 +22,7 @@ export async function POST(req: Request) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const targetModel = modelName || "gemini-1.5-flash";
+    const targetModel = ALLOWED_MODELS.includes(modelName) ? modelName : "gemini-1.5-flash";
     const model = genAI.getGenerativeModel({ model: targetModel });
 
     const prompt = `
@@ -50,9 +58,9 @@ Example format: [{"name": "Put on running shoes", "why": "Removes the friction o
 
     return NextResponse.json({ habits });
   } catch (error: any) {
-    console.error("Generate Habits Error:", error);
+    console.error("Generate Habits Error:", error?.message);
     return NextResponse.json(
-      { error: error.message || "Failed to generate habits" },
+      { error: "Failed to generate habits" },
       { status: 500 }
     );
   }
