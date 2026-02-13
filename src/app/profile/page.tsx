@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useActionState } from 'react';
 import { Pencil, X, Check, LogOut, Mail, Calendar, Phone, Globe } from 'lucide-react';
-import { fetchUser, updateUserName, updateUserPhone, updateUserTimezone, logOut, ALLOWED_TIMEZONES } from '@/lib/actions';
+import { fetchUser, updateUserName, updateUserPhone, updateUserTimezone, logOut } from '@/lib/actions';
+import { ALLOWED_TIMEZONES } from '@/lib/timezones';
 import { cn } from '@/lib/utils';
 
 export default function ProfilePage() {

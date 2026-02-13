@@ -147,28 +147,7 @@ export async function updateUserPhone(prevState: string | undefined, formData: F
   }
 }
 
-const ALLOWED_TIMEZONES = [
-  'Asia/Jakarta',
-  'Asia/Makassar',
-  'Asia/Jayapura',
-  'Asia/Singapore',
-  'Asia/Tokyo',
-  'Asia/Shanghai',
-  'Asia/Kolkata',
-  'Asia/Dubai',
-  'Europe/London',
-  'Europe/Paris',
-  'Europe/Berlin',
-  'America/New_York',
-  'America/Chicago',
-  'America/Denver',
-  'America/Los_Angeles',
-  'Australia/Sydney',
-  'Pacific/Auckland',
-  'UTC',
-];
-
-export { ALLOWED_TIMEZONES };
+import { ALLOWED_TIMEZONES } from '@/lib/timezones';
 
 export async function updateUserTimezone(prevState: string | undefined, formData: FormData) {
   const tz = (formData.get('timezone') as string || '').trim();
