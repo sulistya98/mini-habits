@@ -1,9 +1,10 @@
 import { create } from 'zustand';
-import { fetchHabits, createHabit, deleteHabit, updateHabitName, toggleHabitLog, updateHabitNote, reorderHabits as reorderHabitsAction } from '@/lib/actions';
+import { fetchHabits, createHabit, deleteHabit, updateHabitName, toggleHabitLog, updateHabitNote, reorderHabits as reorderHabitsAction, updateHabitReminderTime } from '@/lib/actions';
 
 export interface Habit {
   id: string;
   name: string;
+  reminderTime?: string | null;
   completedDates: Record<string, boolean>; // 'YYYY-MM-DD': true
   notes?: Record<string, string>; // 'YYYY-MM-DD': "Note text"
 }
@@ -24,6 +25,7 @@ interface HabitStore {
   toggleHabit: (id: string, date: string) => Promise<void>;
   addNote: (id: string, date: string, note: string) => Promise<void>;
   reorderHabits: (fromIndex: number, toIndex: number) => void; // Keeping local for now
+  setReminderTime: (id: string, time: string | null) => Promise<void>;
 }
 
 export const useHabitStore = create<HabitStore>((set, get) => ({
@@ -115,5 +117,14 @@ export const useHabitStore = create<HabitStore>((set, get) => ({
     });
     const orderedIds = get().habits.map((h) => h.id);
     reorderHabitsAction(orderedIds);
+  },
+
+  setReminderTime: async (id, time) => {
+    set((state) => ({
+      habits: state.habits.map((h) =>
+        h.id === id ? { ...h, reminderTime: time } : h
+      ),
+    }));
+    await updateHabitReminderTime(id, time);
   },
 }));

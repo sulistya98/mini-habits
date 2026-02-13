@@ -95,7 +95,7 @@ export async function fetchUser() {
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
-    select: { name: true, email: true, createdAt: true },
+    select: { name: true, email: true, phone: true, timezone: true, createdAt: true },
   });
   return user;
 }
@@ -122,6 +122,73 @@ export async function updateUserName(prevState: string | undefined, formData: Fo
     return 'success';
   } catch {
     return 'Failed to update name.';
+  }
+}
+
+export async function updateUserPhone(prevState: string | undefined, formData: FormData) {
+  const raw = (formData.get('phone') as string || '').trim();
+
+  if (raw && !/^\d{10,15}$/.test(raw)) {
+    return 'Phone must be 10-15 digits (e.g., 6289685028129).';
+  }
+
+  const session = await auth();
+  if (!session?.user?.email) return 'Unauthorized';
+
+  try {
+    await prisma.user.update({
+      where: { email: session.user.email },
+      data: { phone: raw || null },
+    });
+    revalidatePath('/profile');
+    return 'success';
+  } catch {
+    return 'Failed to update phone.';
+  }
+}
+
+const ALLOWED_TIMEZONES = [
+  'Asia/Jakarta',
+  'Asia/Makassar',
+  'Asia/Jayapura',
+  'Asia/Singapore',
+  'Asia/Tokyo',
+  'Asia/Shanghai',
+  'Asia/Kolkata',
+  'Asia/Dubai',
+  'Europe/London',
+  'Europe/Paris',
+  'Europe/Berlin',
+  'America/New_York',
+  'America/Chicago',
+  'America/Denver',
+  'America/Los_Angeles',
+  'Australia/Sydney',
+  'Pacific/Auckland',
+  'UTC',
+];
+
+export { ALLOWED_TIMEZONES };
+
+export async function updateUserTimezone(prevState: string | undefined, formData: FormData) {
+  const tz = (formData.get('timezone') as string || '').trim();
+
+  if (!ALLOWED_TIMEZONES.includes(tz)) {
+    return 'Invalid timezone.';
+  }
+
+  const session = await auth();
+  if (!session?.user?.email) return 'Unauthorized';
+
+  try {
+    await prisma.user.update({
+      where: { email: session.user.email },
+      data: { timezone: tz },
+    });
+    revalidatePath('/profile');
+    return 'success';
+  } catch {
+    return 'Failed to update timezone.';
   }
 }
 
@@ -154,6 +221,7 @@ export async function fetchHabits() {
     return habits.map((h: any) => ({
         id: h.id,
         name: h.name,
+        reminderTime: h.reminderTime,
         completedDates: h.logs.reduce((acc: any, log: any) => ({ ...acc, [log.date]: true }), {} as Record<string, boolean>),
         notes: h.logs.reduce((acc: any, log: any) => log.note ? ({ ...acc, [log.date]: log.note }) : acc, {} as Record<string, string>)
     }));
@@ -249,4 +317,19 @@ export async function reorderHabits(orderedIds: string[]) {
         )
     );
     revalidatePath('/');
+}
+
+export async function updateHabitReminderTime(habitId: string, reminderTime: string | null) {
+    const userId = await getUserId();
+    if (!userId) throw new Error('Unauthorized');
+
+    if (reminderTime && !/^\d{2}:\d{2}$/.test(reminderTime)) {
+        throw new Error('Invalid time format. Use HH:mm.');
+    }
+
+    await prisma.habit.updateMany({
+        where: { id: habitId, userId },
+        data: { reminderTime },
+    });
+    revalidatePath('/manage');
 }

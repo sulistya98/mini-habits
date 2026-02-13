@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Trash2, Plus, Pencil, X, Check, GripVertical } from 'lucide-react';
+import { Trash2, Plus, Pencil, X, Check, GripVertical, Bell, BellOff } from 'lucide-react';
 import { useHabitStore, Habit } from '@/store/useHabitStore';
 import { ClientOnly } from '@/components/ClientOnly';
 import {
@@ -31,6 +31,10 @@ function SortableHabitItem({
   saveEdit,
   cancelEdit,
   removeHabit,
+  editingReminderId,
+  onReminderClick,
+  onReminderChange,
+  onReminderClear,
 }: {
   habit: Habit;
   editingId: string | null;
@@ -40,6 +44,10 @@ function SortableHabitItem({
   saveEdit: () => void;
   cancelEdit: () => void;
   removeHabit: (id: string) => Promise<void>;
+  editingReminderId: string | null;
+  onReminderClick: (id: string) => void;
+  onReminderChange: (id: string, time: string) => void;
+  onReminderClear: (id: string) => void;
 }) {
   const {
     attributes,
@@ -85,7 +93,36 @@ function SortableHabitItem({
             <button onClick={cancelEdit} className="text-red-500 dark:text-red-400"><X className="w-4 h-4" /></button>
           </div>
         ) : (
-          <span className="block truncate text-neutral-700 dark:text-neutral-200 font-medium">{habit.name}</span>
+          <div>
+            <span className="block truncate text-neutral-700 dark:text-neutral-200 font-medium">{habit.name}</span>
+            {editingReminderId === habit.id ? (
+              <div className="flex items-center gap-2 mt-1">
+                <input
+                  type="time"
+                  defaultValue={habit.reminderTime || ''}
+                  onChange={(e) => onReminderChange(habit.id, e.target.value)}
+                  className="bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 rounded px-2 py-0.5 text-xs outline-none"
+                  autoFocus
+                />
+                {habit.reminderTime && (
+                  <button
+                    onClick={() => onReminderClear(habit.id)}
+                    className="text-red-500 dark:text-red-400"
+                  >
+                    <BellOff className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => onReminderClick(habit.id)}
+                className="flex items-center gap-1 mt-0.5 text-xs text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
+              >
+                <Bell className="w-3 h-3" />
+                <span>{habit.reminderTime ? habit.reminderTime : 'No reminder'}</span>
+              </button>
+            )}
+          </div>
         )}
       </div>
 
@@ -117,10 +154,11 @@ function SortableHabitItem({
 }
 
 export default function ManagePage() {
-  const { habits, addHabit, removeHabit, renameHabit, reorderHabits, syncHabits } = useHabitStore();
+  const { habits, addHabit, removeHabit, renameHabit, reorderHabits, syncHabits, setReminderTime } = useHabitStore();
   const [newHabitName, setNewHabitName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
+  const [editingReminderId, setEditingReminderId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -219,6 +257,16 @@ export default function ManagePage() {
                       saveEdit={saveEdit}
                       cancelEdit={cancelEdit}
                       removeHabit={removeHabit}
+                      editingReminderId={editingReminderId}
+                      onReminderClick={(id) => setEditingReminderId(editingReminderId === id ? null : id)}
+                      onReminderChange={(id, time) => {
+                        setReminderTime(id, time);
+                        setEditingReminderId(null);
+                      }}
+                      onReminderClear={(id) => {
+                        setReminderTime(id, null);
+                        setEditingReminderId(null);
+                      }}
                     />
                   ))}
 

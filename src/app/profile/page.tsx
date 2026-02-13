@@ -1,14 +1,18 @@
 'use client';
 
 import { useEffect, useState, useActionState } from 'react';
-import { Pencil, X, Check, LogOut, Mail, Calendar } from 'lucide-react';
-import { fetchUser, updateUserName, logOut } from '@/lib/actions';
+import { Pencil, X, Check, LogOut, Mail, Calendar, Phone, Globe } from 'lucide-react';
+import { fetchUser, updateUserName, updateUserPhone, updateUserTimezone, logOut, ALLOWED_TIMEZONES } from '@/lib/actions';
 import { cn } from '@/lib/utils';
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<{ name: string | null; email: string; createdAt: Date } | null>(null);
+  const [user, setUser] = useState<{ name: string | null; email: string; phone: string | null; timezone: string | null; createdAt: Date } | null>(null);
   const [editing, setEditing] = useState(false);
+  const [editingPhone, setEditingPhone] = useState(false);
+  const [editingTimezone, setEditingTimezone] = useState(false);
   const [state, formAction, isPending] = useActionState(updateUserName, undefined);
+  const [phoneState, phoneAction, phonePending] = useActionState(updateUserPhone, undefined);
+  const [tzState, tzAction, tzPending] = useActionState(updateUserTimezone, undefined);
 
   useEffect(() => {
     fetchUser().then(setUser);
@@ -20,6 +24,20 @@ export default function ProfilePage() {
       fetchUser().then(setUser);
     }
   }, [state]);
+
+  useEffect(() => {
+    if (phoneState === 'success') {
+      setEditingPhone(false);
+      fetchUser().then(setUser);
+    }
+  }, [phoneState]);
+
+  useEffect(() => {
+    if (tzState === 'success') {
+      setEditingTimezone(false);
+      fetchUser().then(setUser);
+    }
+  }, [tzState]);
 
   if (!user) {
     return (
@@ -109,6 +127,92 @@ export default function ProfilePage() {
               <Mail className="w-4 h-4 text-neutral-400 dark:text-neutral-500" />
               <span className="text-neutral-800 dark:text-neutral-200">{user.email}</span>
             </div>
+          </div>
+
+          {/* Phone */}
+          <div className="p-4 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-xl">
+            <label className="text-xs font-medium text-neutral-400 dark:text-neutral-500 uppercase tracking-wide">
+              WhatsApp Number
+            </label>
+            {editingPhone ? (
+              <form action={phoneAction} className="flex items-center gap-2 mt-1">
+                <input
+                  name="phone"
+                  defaultValue={user.phone || ''}
+                  placeholder="6289685028129"
+                  className="flex-1 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 rounded px-3 py-1.5 text-sm outline-none focus:ring-1 focus:ring-neutral-300 dark:focus:ring-neutral-600"
+                  autoFocus
+                />
+                <button type="submit" disabled={phonePending} className="text-green-600 dark:text-green-400 disabled:opacity-50">
+                  <Check className="w-5 h-5" />
+                </button>
+                <button type="button" onClick={() => setEditingPhone(false)} className="text-red-500 dark:text-red-400">
+                  <X className="w-5 h-5" />
+                </button>
+              </form>
+            ) : (
+              <div className="flex items-center justify-between mt-1">
+                <div className="flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-neutral-400 dark:text-neutral-500" />
+                  <span className="text-neutral-800 dark:text-neutral-200">
+                    {user.phone || 'Not set'}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setEditingPhone(true)}
+                  className="p-1.5 text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+            {phoneState && phoneState !== 'success' && (
+              <p className="text-red-500 text-xs mt-1">{phoneState}</p>
+            )}
+          </div>
+
+          {/* Timezone */}
+          <div className="p-4 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-xl">
+            <label className="text-xs font-medium text-neutral-400 dark:text-neutral-500 uppercase tracking-wide">
+              Timezone
+            </label>
+            {editingTimezone ? (
+              <form action={tzAction} className="flex items-center gap-2 mt-1">
+                <select
+                  name="timezone"
+                  defaultValue={user.timezone || 'Asia/Jakarta'}
+                  className="flex-1 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 rounded px-3 py-1.5 text-sm outline-none focus:ring-1 focus:ring-neutral-300 dark:focus:ring-neutral-600"
+                >
+                  {ALLOWED_TIMEZONES.map((tz) => (
+                    <option key={tz} value={tz}>{tz}</option>
+                  ))}
+                </select>
+                <button type="submit" disabled={tzPending} className="text-green-600 dark:text-green-400 disabled:opacity-50">
+                  <Check className="w-5 h-5" />
+                </button>
+                <button type="button" onClick={() => setEditingTimezone(false)} className="text-red-500 dark:text-red-400">
+                  <X className="w-5 h-5" />
+                </button>
+              </form>
+            ) : (
+              <div className="flex items-center justify-between mt-1">
+                <div className="flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-neutral-400 dark:text-neutral-500" />
+                  <span className="text-neutral-800 dark:text-neutral-200">
+                    {user.timezone || 'Asia/Jakarta'}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setEditingTimezone(true)}
+                  className="p-1.5 text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+            {tzState && tzState !== 'success' && (
+              <p className="text-red-500 text-xs mt-1">{tzState}</p>
+            )}
           </div>
 
           {/* Member Since */}
